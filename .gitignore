@@ -1,0 +1,28 @@
+# Build
+target/
+*.jar
+*.class
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+
+# Maven
+.m2/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Plugin Data
+plugins/
+world/
+
+# Logs
+*.log

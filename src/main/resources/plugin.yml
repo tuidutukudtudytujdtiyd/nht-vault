@@ -1,0 +1,13 @@
+name: PlayerVaultPlus
+version: 1.0.0
+main: com.playervaultplus.PlayerVaultPlus
+description: Personal vault storage plugin for Paper 1.21.4+
+authors: [YourName]
+apiVersion: "1.21"
+load: POSTWORLD
+
+commands:
+  pv:
+    description: Open your personal vault
+    usage: /pv
+    aliases: [pvault, vault]
