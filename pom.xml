@@ -6,11 +6,11 @@
 
     <groupId>com.playervaultplus</groupId>
     <artifactId>PlayerVaultPlus</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <packaging>jar</packaging>
 
     <name>PlayerVaultPlus</name>
-    <description>Personal vault storage plugin with MySQL + Auto-Sort + Item Editor</description>
+    <description>Personal vault storage plugin with MySQL + MMOItems Hook + Auto-Sort</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -22,6 +22,11 @@
         <repository>
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+        <!-- MMOItems Repository -->
+        <repository>
+            <id>mmoitems-repo</id>
+            <url>https://ci.lumine.io/artifactory/ext-release-local/</url>
         </repository>
     </repositories>
 
@@ -53,6 +58,22 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
+        </dependency>
+        
+        <!-- MMOItems API -->
+        <dependency>
+            <groupId>net.Indyuce</groupId>
+            <artifactId>MMOItems-API</artifactId>
+            <version>6.9.3-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!-- MMOCore (dependency of MMOItems) -->
+        <dependency>
+            <groupId>net.Indyuce</groupId>
+            <artifactId>MMOCore-API</artifactId>
+            <version>1.6.3-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

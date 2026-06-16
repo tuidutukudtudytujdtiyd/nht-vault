@@ -5,14 +5,17 @@ import com.playervaultplus.config.ConfigManager;
 import com.playervaultplus.database.DatabaseConnector;
 import com.playervaultplus.database.DatabaseManager;
 import com.playervaultplus.gui.GUIManager;
+import com.playervaultplus.hook.HookManager;
 import com.playervaultplus.listener.InventoryListener;
+import com.playervaultplus.serialization.SafeItemSerializer;
+import com.playervaultplus.vault.VaultItem;
 import com.playervaultplus.vault.VaultManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * Main plugin class for PlayerVaultPlus
  * Handles initialization and lifecycle management
- * Version 1.1.0 - Added MySQL Database + Auto-Sort + Config System
+ * Version 1.2.0 - Added MMOItems Hook + Safe Serialization
  */
 public class PlayerVaultPlus extends JavaPlugin {
 
@@ -22,6 +25,8 @@ public class PlayerVaultPlus extends JavaPlugin {
     private DatabaseManager databaseManager;
     private VaultManager vaultManager;
     private GUIManager guiManager;
+    private HookManager hookManager;
+    private SafeItemSerializer itemSerializer;
 
     @Override
     public void onEnable() {
@@ -58,6 +63,16 @@ public class PlayerVaultPlus extends JavaPlugin {
             // Initialize GUI manager
             this.guiManager = new GUIManager(this);
             getLogger().info("✓ GUI manager initialized");
+
+            // Initialize hook manager
+            this.hookManager = new HookManager(this);
+            hookManager.loadHooks();
+            getLogger().info("✓ Hook manager initialized");
+
+            // Initialize safe item serializer
+            this.itemSerializer = new SafeItemSerializer(this, hookManager.getMMOItemsHook());
+            VaultItem.initialize(itemSerializer, hookManager.getMMOItemsHook());
+            getLogger().info("✓ Item serializer initialized");
 
             // Register commands
             new VaultCommand(this);
@@ -121,5 +136,13 @@ public class PlayerVaultPlus extends JavaPlugin {
 
     public GUIManager getGUIManager() {
         return guiManager;
+    }
+
+    public HookManager getHookManager() {
+        return hookManager;
+    }
+
+    public SafeItemSerializer getItemSerializer() {
+        return itemSerializer;
     }
 }

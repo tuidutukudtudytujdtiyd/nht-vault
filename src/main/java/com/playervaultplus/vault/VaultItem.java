@@ -1,16 +1,13 @@
 package com.playervaultplus.vault;
 
+import com.playervaultplus.PlayerVaultPlus;
+import com.playervaultplus.hook.MMOItemsHook;
+import com.playervaultplus.serialization.SafeItemSerializer;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.io.BukkitObjectInputStream;
-import org.bukkit.util.io.BukkitObjectOutputStream;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.Base64;
 
 /**
  * Represents an item stored in the vault with serialization support and custom metadata
+ * Safely handles both regular and MMOItems
  */
 public class VaultItem {
 
@@ -18,13 +15,36 @@ public class VaultItem {
     private int quantity;
     private String displayName;  // Custom name
     private String lore;         // Custom lore
-    private String itemType;     // Material name for quick lookup
+    private String itemType;     // Material/type name for quick lookup
+    private boolean isMMOItem = false;  // Flag for MMOItems
+
+    private static SafeItemSerializer serializer;
+    private static MMOItemsHook mmoItemsHook;
+
+    /**
+     * Static initializer for serializer
+     */
+    public static void initialize(SafeItemSerializer serializer, MMOItemsHook mmoItemsHook) {
+        VaultItem.serializer = serializer;
+        VaultItem.mmoItemsHook = mmoItemsHook;
+    }
 
     public VaultItem(ItemStack item) {
         if (item != null && !item.getType().isAir()) {
-            this.quantity = item.getAmount();
+            this.quantity = Math.max(1, item.getAmount());
             this.itemType = item.getType().name();
-            this.serializedData = serializeItem(item);
+            
+            // Check if it's MMOItem
+            if (mmoItemsHook != null && mmoItemsHook.isMMOItem(item)) {
+                this.isMMOItem = true;
+            }
+            
+            // Serialize using safe serializer
+            if (serializer != null) {
+                this.serializedData = serializer.serialize(item);
+            } else {
+                this.serializedData = serializeItemFallback(item);
+            }
             
             // Extract display name from item meta
             if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
@@ -38,25 +58,36 @@ public class VaultItem {
 
     public VaultItem(String serializedData, int quantity) {
         this.serializedData = serializedData;
-        this.quantity = quantity;
+        this.quantity = Math.max(1, quantity);
+    }
+
+    /**
+     * Fallback serialization method
+     */
+    private static String serializeItemFallback(ItemStack item) {
+        if (item == null || item.getType().isAir()) {
+            return null;
+        }
+        try {
+            org.bukkit.util.io.BukkitObjectOutputStream boos = 
+                new org.bukkit.util.io.BukkitObjectOutputStream(
+                    new java.io.ByteArrayOutputStream());
+            boos.writeObject(item);
+            java.io.ByteArrayOutputStream baos = (java.io.ByteArrayOutputStream) boos.getClass().getDeclaredField("out").get(boos);
+            return java.util.Base64.getEncoder().encodeToString(baos.toByteArray());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
      * Serialize ItemStack to Base64 string for storage
      */
     public static String serializeItem(ItemStack item) {
-        if (item == null || item.getType().isAir()) {
-            return null;
+        if (serializer != null) {
+            return serializer.serialize(item);
         }
-        try (
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BukkitObjectOutputStream boos = new BukkitObjectOutputStream(baos)
-        ) {
-            boos.writeObject(item);
-            return Base64.getEncoder().encodeToString(baos.toByteArray());
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to serialize item", e);
-        }
+        return serializeItemFallback(item);
     }
 
     /**
@@ -66,13 +97,19 @@ public class VaultItem {
         if (data == null || data.isEmpty()) {
             return null;
         }
-        try (
-            ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(data));
-            BukkitObjectInputStream bois = new BukkitObjectInputStream(bais)
-        ) {
+        
+        if (serializer != null) {
+            return serializer.deserialize(data);
+        }
+        
+        try {
+            java.io.ByteArrayInputStream bais = 
+                new java.io.ByteArrayInputStream(java.util.Base64.getDecoder().decode(data));
+            org.bukkit.util.io.BukkitObjectInputStream bois = 
+                new org.bukkit.util.io.BukkitObjectInputStream(bais);
             return (ItemStack) bois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException("Failed to deserialize item", e);
+        } catch (Exception e) {
+            return null;
         }
     }
 
@@ -82,7 +119,7 @@ public class VaultItem {
         }
         ItemStack item = deserializeItem(serializedData);
         if (item != null) {
-            item.setAmount(quantity);
+            item.setAmount(Math.max(1, quantity));
         }
         return item;
     }
@@ -123,6 +160,10 @@ public class VaultItem {
             }
         }
         return itemType != null ? itemType : "UNKNOWN";
+    }
+
+    public boolean isMMOItem() {
+        return isMMOItem;
     }
 
     public boolean isEmpty() {
