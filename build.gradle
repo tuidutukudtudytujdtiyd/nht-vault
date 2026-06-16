@@ -17,10 +17,6 @@ repositories {
         url = uri('https://repo.papermc.io/repository/maven-public/')
         name = 'papermc'
     }
-    maven {
-        url = uri('https://ci.lumine.io/artifactory/ext-release-local/')
-        name = 'mmoitems-repo'
-    }
 }
 
 dependencies {
@@ -30,17 +26,15 @@ dependencies {
     // HikariCP Connection Pool
     implementation 'com.zaxxer:HikariCP:5.0.1'
 
-    // MySQL Driver
-    implementation 'com.mysql:mysql-connector-java:8.0.33'
+    // MySQL Driver - Fixed: use mysql:mysql-connector-java instead of com.mysql
+    implementation 'mysql:mysql-connector-java:8.0.33'
 
     // JSON Processing
     implementation 'com.google.code.gson:gson:2.10.1'
 
-    // MMOItems API
-    compileOnly 'net.Indyuce:MMOItems-API:6.9.3-SNAPSHOT'
-
-    // MMOCore (dependency of MMOItems)
-    compileOnly 'net.Indyuce:MMOCore-API:1.6.3-SNAPSHOT'
+    // MMOItems API - Optional (requires separate repo setup)
+    // compileOnly 'net.Indyuce:MMOItems-API:6.9.3-SNAPSHOT'
+    // compileOnly 'net.Indyuce:MMOCore-API:1.6.3-SNAPSHOT'
 }
 
 tasks.named('jar') {
@@ -57,7 +51,7 @@ tasks.named('shadowJar') {
 
     dependencies {
         include dependency('com.zaxxer:HikariCP:5.0.1')
-        include dependency('com.mysql:mysql-connector-java:8.0.33')
+        include dependency('mysql:mysql-connector-java:8.0.33')
         include dependency('com.google.code.gson:gson:2.10.1')
     }
 }
