@@ -1,0 +1,74 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group = 'com.playervaultplus'
+version = '1.2.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri('https://repo.papermc.io/repository/maven-public/')
+        name = 'papermc'
+    }
+    maven {
+        url = uri('https://ci.lumine.io/artifactory/ext-release-local/')
+        name = 'mmoitems-repo'
+    }
+}
+
+dependencies {
+    // Paper API
+    compileOnly 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
+
+    // HikariCP Connection Pool
+    implementation 'com.zaxxer:HikariCP:5.0.1'
+
+    // MySQL Driver
+    implementation 'com.mysql:mysql-connector-java:8.0.33'
+
+    // JSON Processing
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // MMOItems API
+    compileOnly 'net.Indyuce:MMOItems-API:6.9.3-SNAPSHOT'
+
+    // MMOCore (dependency of MMOItems)
+    compileOnly 'net.Indyuce:MMOCore-API:1.6.3-SNAPSHOT'
+}
+
+tasks.named('jar') {
+    manifest {
+        attributes 'Main-Class': 'com.playervaultplus.PlayerVaultPlus'
+    }
+}
+
+tasks.named('shadowJar') {
+    archiveFileName = "PlayerVaultPlus-${version}.jar"
+    
+    relocate 'com.zaxxer.hikari', 'com.playervaultplus.libs.hikari'
+    relocate 'com.google.gson', 'com.playervaultplus.libs.gson'
+
+    dependencies {
+        include dependency('com.zaxxer:HikariCP:5.0.1')
+        include dependency('com.mysql:mysql-connector-java:8.0.33')
+        include dependency('com.google.code.gson:gson:2.10.1')
+    }
+}
+
+build {
+    dependsOn shadowJar
+}
+
+processResources {
+    from('src/main/resources') {
+        include '**/*'
+        expand project.properties
+    }
+}

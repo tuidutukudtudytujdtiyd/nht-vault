@@ -3,9 +3,11 @@
 ## Prerequisites
 
 - Java 21 or higher
-- Maven 3.6+
+- Gradle 8.5+ (or use the included Gradle Wrapper)
 
-## Build Steps
+## Build Steps with Gradle
+
+### Using Gradle Wrapper (Recommended)
 
 1. Clone or download the project
 
@@ -16,17 +18,29 @@
 
 3. Build the project:
    ```bash
-   mvn clean package
+   ./gradlew build
+   ```
+   On Windows:
+   ```bash
+   gradlew.bat build
    ```
 
-4. The compiled JAR will be in the `target/` directory:
+4. The compiled JAR will be in the `build/libs/` directory:
    ```
-   target/PlayerVaultPlus-1.0.0.jar
+   build/libs/PlayerVaultPlus-1.2.0.jar
    ```
+
+### Using Local Gradle Installation
+
+If you have Gradle installed:
+
+```bash
+gradle build
+```
 
 ## Installation
 
-1. Copy `PlayerVaultPlus-1.0.0.jar` to your Paper server's `plugins/` folder
+1. Copy `PlayerVaultPlus-1.2.0.jar` to your Paper server's `plugins/` folder
 
 2. Restart your server
 
@@ -36,8 +50,8 @@
 
 ### Build Fails
 - Ensure Java 21 is installed: `java -version`
-- Ensure Maven is installed: `mvn -version`
-- Delete `target` folder and rebuild: `mvn clean package`
+- Delete `build` folder and rebuild: `./gradlew clean build`
+- Clear Gradle cache: `./gradlew clean`
 
 ### Plugin Won't Load
 - Check server logs for errors
@@ -50,6 +64,16 @@
 To work on the code:
 
 1. Import the project into your IDE (IntelliJ IDEA, Eclipse, etc.)
-2. Run Maven to download dependencies: `mvn clean install`
+2. IDEs will automatically detect the Gradle project and download dependencies
 3. Make your changes
-4. Rebuild: `mvn clean package`
+4. Rebuild: `./gradlew clean build`
+
+## Gradle Tasks
+
+Useful Gradle commands:
+
+- `./gradlew build` - Build the project with shadow jar
+- `./gradlew clean` - Remove build artifacts
+- `./gradlew compileJava` - Only compile Java files
+- `./gradlew shadowJar` - Create the fat JAR with shaded dependencies
+- `./gradlew dependencies` - Show dependency tree
