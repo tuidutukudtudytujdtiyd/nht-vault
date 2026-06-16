@@ -1,6 +1,7 @@
 package com.playervaultplus.vault;
 
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,8 +15,9 @@ public class PlayerVault {
 
     private static final int VAULT_SIZE = 300;
     private final UUID playerUUID;
+    private int vaultId = -1;  // Database ID
     private final Map<Integer, VaultItem> items;
-    private boolean dirty = false; // Track if vault has unsaved changes
+    private boolean dirty = false;
 
     public PlayerVault(UUID playerUUID) {
         this.playerUUID = playerUUID;
@@ -27,6 +29,13 @@ public class PlayerVault {
      * Prevents duplication by checking current slot contents
      */
     public synchronized boolean addItem(int slot, ItemStack item) {
+        return addItem(slot, item, null, null);
+    }
+
+    /**
+     * Add an item with custom display name and lore
+     */
+    public synchronized boolean addItem(int slot, ItemStack item, String displayName, String lore) {
         if (slot < 0 || slot >= VAULT_SIZE) {
             return false;
         }
@@ -45,6 +54,8 @@ public class PlayerVault {
         }
 
         VaultItem vaultItem = new VaultItem(item.clone());
+        vaultItem.setDisplayName(displayName);
+        vaultItem.setLore(lore);
         items.put(slot, vaultItem);
         dirty = true;
         return true;
@@ -52,7 +63,6 @@ public class PlayerVault {
 
     /**
      * Remove an item from the vault at a specific slot
-     * Returns the item or null if slot is empty
      */
     public synchronized ItemStack removeItem(int slot) {
         if (slot < 0 || slot >= VAULT_SIZE) {
@@ -83,13 +93,22 @@ public class PlayerVault {
     }
 
     /**
-     * Check if two items are the same (considering type, damage, enchantments, etc.)
+     * Get vault item with metadata
+     */
+    public synchronized VaultItem getVaultItem(int slot) {
+        if (slot < 0 || slot >= VAULT_SIZE) {
+            return null;
+        }
+        return items.get(slot);
+    }
+
+    /**
+     * Check if two items are the same
      */
     private boolean isSameItem(ItemStack item1, ItemStack item2) {
         if (item1 == null || item2 == null) return false;
         if (!item1.getType().equals(item2.getType())) return false;
         
-        // Compare display names
         String name1 = item1.getItemMeta() != null ? item1.getItemMeta().getDisplayName() : null;
         String name2 = item2.getItemMeta() != null ? item2.getItemMeta().getDisplayName() : null;
         
@@ -144,8 +163,44 @@ public class PlayerVault {
         return VAULT_SIZE - getUsedSlots();
     }
 
+    /**
+     * Auto-sort vault items by category
+     */
+    public synchronized void autoSort() {
+        // Create sorted map
+        Map<Integer, VaultItem> sortedItems = new HashMap<>();
+        int targetSlot = 0;
+
+        // Sort by item type
+        items.values().stream()
+            .filter(item -> !item.isEmpty())
+            .sorted((a, b) -> a.getItemType().compareTo(b.getItemType()))
+            .forEach(item -> {
+                while (targetSlot < VAULT_SIZE && sortedItems.containsKey(targetSlot)) {
+                    targetSlot++;
+                }
+                if (targetSlot < VAULT_SIZE) {
+                    sortedItems.put(targetSlot, item);
+                    targetSlot++;
+                }
+            });
+
+        items.clear();
+        items.putAll(sortedItems);
+        dirty = true;
+    }
+
+    // Getters & Setters
     public UUID getPlayerUUID() {
         return playerUUID;
+    }
+
+    public int getVaultId() {
+        return vaultId;
+    }
+
+    public void setVaultId(int vaultId) {
+        this.vaultId = vaultId;
     }
 
     public int getVaultSize() {

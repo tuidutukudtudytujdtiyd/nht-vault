@@ -56,7 +56,6 @@ public class GUIManager {
     public void closeVaultSession(UUID playerUUID) {
         VaultGUISession session = activeSessions.remove(playerUUID);
         if (session != null) {
-            // Save vault changes
             plugin.getVaultManager().saveVault(playerUUID);
         }
     }

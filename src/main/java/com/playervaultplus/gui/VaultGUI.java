@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Main vault GUI with pagination and filtering support
+ * Main vault GUI with pagination, filtering, and auto-sort support
  * Displays 45 items per page with control buttons
  */
 public class VaultGUI {
@@ -27,10 +27,11 @@ public class VaultGUI {
     private static final int CONTROL_ROW_START = 45; // Row 6 for controls
 
     // Control button slots
-    private static final int PREV_PAGE_SLOT = 45; // First slot of control row
-    private static final int NEXT_PAGE_SLOT = 53; // Last slot of control row
-    private static final int FILTER_BUTTON_SLOT = 49; // Middle of control row
-    private static final int PAGE_INFO_SLOT = 48; // Info slot
+    private static final int PREV_PAGE_SLOT = 45;      // Previous page
+    private static final int NEXT_PAGE_SLOT = 53;      // Next page
+    private static final int FILTER_BUTTON_SLOT = 49;  // Filter
+    private static final int AUTO_SORT_SLOT = 47;      // Auto-sort
+    private static final int PAGE_INFO_SLOT = 48;      // Page info
 
     private final PlayerVaultPlus plugin;
     private final Player player;
@@ -72,8 +73,11 @@ public class VaultGUI {
         }
         pageManager.setCurrentPage(currentPage);
 
-        // Create inventory
-        String pageTitle = String.format("§6Vault §f(%d/%d)", currentPage + 1, totalPages);
+        // Create inventory with title from config
+        String pageTitle = plugin.getConfigManager().getVaultTitle()
+            .replace("%page%", String.valueOf(currentPage + 1))
+            .replace("%total%", String.valueOf(totalPages));
+        
         inventory = Bukkit.createInventory(player, INVENTORY_SIZE, pageTitle);
 
         // Add vault items
@@ -96,6 +100,15 @@ public class VaultGUI {
             if (vaultItem != null && !vaultItem.isEmpty()) {
                 ItemStack item = vaultItem.toItemStack();
                 if (itemFilter.matches(item)) {
+                    // Apply custom display name and lore
+                    if (vaultItem.getDisplayName() != null) {
+                        ItemMeta meta = item.getItemMeta();
+                        if (meta != null) {
+                            meta.setDisplayName(vaultItem.getDisplayName());
+                            item.setItemMeta(meta);
+                        }
+                    }
+                    
                     int guiSlot = vaultSlot - startSlot;
                     inventory.setItem(guiSlot, item);
                 }
@@ -111,28 +124,34 @@ public class VaultGUI {
 
         // Previous page button
         if (currentPage > 0) {
-            ItemStack prevButton = createButton(Material.ARROW, "§c< Previous");
+            ItemStack prevButton = createButton(Material.ARROW, 
+                plugin.getConfigManager().getButtonName("previous-page"));
             inventory.setItem(PREV_PAGE_SLOT, prevButton);
         }
 
         // Next page button
         if (currentPage < totalPages - 1) {
-            ItemStack nextButton = createButton(Material.ARROW, "§aNext >");
+            ItemStack nextButton = createButton(Material.ARROW, 
+                plugin.getConfigManager().getButtonName("next-page"));
             inventory.setItem(NEXT_PAGE_SLOT, nextButton);
         }
 
+        // Auto-sort button
+        ItemStack autoSortButton = createButton(Material.ANVIL, 
+            plugin.getConfigManager().getButtonName("auto-sort"));
+        inventory.setItem(AUTO_SORT_SLOT, autoSortButton);
+
         // Filter button
-        ItemStack filterButton = createButton(
-            Material.HOPPER,
-            "§bFilter: §e" + session.getCurrentFilter().getDisplayName()
-        );
+        ItemStack filterButton = createButton(Material.HOPPER, 
+            plugin.getConfigManager().getButtonName("filter") + " §e" + session.getCurrentFilter().getDisplayName());
         inventory.setItem(FILTER_BUTTON_SLOT, filterButton);
 
         // Page info
-        String pageInfoText = String.format(
-            "§6Page %d/%d §8(Slots: %d/%d)",
+        String pageInfoText = String.format("%sPage %d/%d %s(Slots: %d/%d)",
+            plugin.getConfigManager().getColor("primary"),
             currentPage + 1,
             totalPages,
+            plugin.getConfigManager().getColor("info"),
             vault.getUsedSlots(),
             300
         );
@@ -157,21 +176,9 @@ public class VaultGUI {
     }
 
     /**
-     * Handle inventory click
-     */
-    public void handleClick(int slot, ItemStack clicked) {
-        if (slot >= CONTROL_ROW_START) {
-            handleControlClick(slot);
-            return;
-        }
-
-        // Regular item slot - no action needed, player can take/put items
-    }
-
-    /**
      * Handle control button click
      */
-    private void handleControlClick(int slot) {
+    public void handleControlClick(int slot) {
         int totalPages = pageManager.getTotalPages(vault.getAllItems());
 
         if (slot == PREV_PAGE_SLOT) {
@@ -184,6 +191,11 @@ public class VaultGUI {
                 session.setCurrentPage(pageManager.getCurrentPage());
                 open();
             }
+        } else if (slot == AUTO_SORT_SLOT) {
+            // Auto-sort vault
+            vault.autoSort();
+            player.sendMessage(plugin.getConfigManager().getMessage("sorted"));
+            open();
         } else if (slot == FILTER_BUTTON_SLOT) {
             // Open filter GUI
             plugin.getGUIManager().openFilterGUI(player, vault);
@@ -196,13 +208,5 @@ public class VaultGUI {
 
     public int getControlRowStart() {
         return CONTROL_ROW_START;
-    }
-
-    public ItemFilter getItemFilter() {
-        return itemFilter;
-    }
-
-    public PageManager getPageManager() {
-        return pageManager;
     }
 }

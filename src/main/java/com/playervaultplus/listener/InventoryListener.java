@@ -1,7 +1,6 @@
 package com.playervaultplus.listener;
 
 import com.playervaultplus.PlayerVaultPlus;
-import com.playervaultplus.gui.FilterGUI;
 import com.playervaultplus.gui.GUIManager;
 import com.playervaultplus.gui.VaultGUI;
 import com.playervaultplus.gui.VaultGUISession;
@@ -79,36 +78,13 @@ public class InventoryListener implements Listener {
         // Handle control buttons (last row)
         if (clickedSlot >= 45) {
             event.setCancelled(true);
-            handleVaultControlClick(clickedSlot, player, vault, session);
+            VaultGUI gui = new VaultGUI(plugin, player, vault, session);
+            gui.handleControlClick(clickedSlot);
             return;
         }
 
         // Handle regular item slots
         handleVaultItemClick(event, player, vault, session, clickedSlot);
-    }
-
-    /**
-     * Handle control button clicks in vault GUI
-     */
-    private void handleVaultControlClick(int slot, Player player, PlayerVault vault, VaultGUISession session) {
-        switch (slot) {
-            case 45: // Previous page
-                if (session.getCurrentPage() > 0) {
-                    session.setCurrentPage(session.getCurrentPage() - 1);
-                    plugin.getGUIManager().openVaultGUI(player, vault, session.getCurrentPage());
-                }
-                break;
-            case 53: // Next page
-                int totalPages = (300 + 44) / 45; // Calculate total pages
-                if (session.getCurrentPage() < totalPages - 1) {
-                    session.setCurrentPage(session.getCurrentPage() + 1);
-                    plugin.getGUIManager().openVaultGUI(player, vault, session.getCurrentPage());
-                }
-                break;
-            case 49: // Filter button
-                plugin.getGUIManager().openFilterGUI(player, vault);
-                break;
-        }
     }
 
     /**
@@ -196,7 +172,6 @@ public class InventoryListener implements Listener {
      */
     private void handleFilterGUIClick(InventoryClickEvent event, Player player) {
         event.setCancelled(true);
-        // FilterGUI handles its own logic through reopening
     }
 
     /**

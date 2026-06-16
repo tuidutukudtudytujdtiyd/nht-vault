@@ -1,0 +1,106 @@
+# Default Config for PlayerVaultPlus
+# Chỉnh config để tuỳ chỉnh plugin
+
+vault:
+  # Tiêu đề GUI vault
+  title: "§6Vault §f(%page%/%total%)"
+  # Tổng slot mỗi player
+  size: 300
+  # Hiện lore item không
+  show-lore: true
+  # Hiện enchantment không
+  show-enchantments: true
+
+# Tên các nút trong GUI
+buttons:
+  previous-page: "§c< Previous"
+  next-page: "§aNext >"
+  filter: "§bFilter"
+  auto-sort: "§eAuto Sort"
+  page-info: "§6Page Info"
+
+# Màu sắc
+colors:
+  primary: "§6"          # Gold
+  secondary: "§e"        # Yellow
+  success: "§a"          # Green
+  error: "§c"            # Red
+  info: "§9"             # Blue
+  warning: "§6"          # Orange
+  special: "§d"          # Purple
+
+# Font & Style
+styles:
+  button-style: "§l"     # Bold
+  title-style: "§6"      # Gold
+
+# Messages
+messages:
+  vault-opened: "§a✓ Vault opened!"
+  vault-closed: "§aVault closed!"
+  sorted: "§a✓ Vault sorted successfully!"
+  item-renamed: "§a✓ Item renamed!"
+  item-lore-updated: "§a✓ Lore updated!"
+  error: "§c✗ Error: %error%"
+  no-permission: "§cYou don't have permission!"
+
+# Database Config
+database:
+  # mysql hoặc sqlite
+  type: "mysql"
+  
+  # MySQL Configuration
+  mysql:
+    host: "localhost"
+    port: 3306
+    username: "root"
+    password: "password"
+    database: "playervaultplus"
+    
+    # Connection Pool Settings
+    max-pool-size: 10
+    min-idle-connections: 5
+    connection-timeout: 30000      # ms
+    idle-timeout: 600000           # 10 minutes
+    max-lifetime: 1800000          # 30 minutes
+    
+    # SSL (optional)
+    use-ssl: false
+    # Nếu dùng SSL:
+    # ssl-mode: "REQUIRED"
+    # verify-server-certificate: false
+
+# Auto-Sort Config
+auto-sort:
+  enabled: true
+  # sort-by: category, name, quantity
+  sort-by: "category"
+  # Compress items (stack đầy đủ)
+  compress-stacks: true
+
+# Item Display Config
+item-display:
+  # Dùng color codes (§c, §a, ...)
+  use-color-codes: true
+  # Show item type
+  show-item-type: true
+  # Show quantity
+  show-quantity: true
+
+# Backup Config
+backup:
+  # Bật auto backup
+  enabled: true
+  # Interval (in minutes)
+  interval: 1440  # 24 hours
+  # Backup folder
+  folder: "backups"
+
+# Advanced
+advanced:
+  # Debug mode
+  debug: false
+  # Async operations
+  async-operations: true
+  # Query logging
+  log-queries: false

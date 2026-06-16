@@ -1,7 +1,7 @@
 name: PlayerVaultPlus
-version: 1.0.0
+version: 1.1.0
 main: com.playervaultplus.PlayerVaultPlus
-description: Personal vault storage plugin for Paper 1.21.4+
+description: Personal vault storage plugin with MySQL + Auto-Sort + Item Editor
 authors: [YourName]
 apiVersion: "1.21"
 load: POSTWORLD
@@ -11,3 +11,7 @@ commands:
     description: Open your personal vault
     usage: /pv
     aliases: [pvault, vault]
+  pvadmin:
+    description: Admin vault commands
+    usage: /pvadmin <reload|migrate|info>
+    permission: playervaultplus.admin

@@ -10,17 +10,26 @@ import java.io.IOException;
 import java.util.Base64;
 
 /**
- * Represents an item stored in the vault with serialization support
+ * Represents an item stored in the vault with serialization support and custom metadata
  */
 public class VaultItem {
 
     private String serializedData;
     private int quantity;
+    private String displayName;  // Custom name
+    private String lore;         // Custom lore
+    private String itemType;     // Material name for quick lookup
 
     public VaultItem(ItemStack item) {
         if (item != null && !item.getType().isAir()) {
             this.quantity = item.getAmount();
+            this.itemType = item.getType().name();
             this.serializedData = serializeItem(item);
+            
+            // Extract display name from item meta
+            if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+                this.displayName = item.getItemMeta().getDisplayName();
+            }
         } else {
             this.quantity = 0;
             this.serializedData = null;
@@ -87,7 +96,33 @@ public class VaultItem {
     }
 
     public void setQuantity(int quantity) {
-        this.quantity = quantity;
+        this.quantity = Math.max(0, quantity);
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getLore() {
+        return lore;
+    }
+
+    public void setLore(String lore) {
+        this.lore = lore;
+    }
+
+    public String getItemType() {
+        if (itemType == null && serializedData != null) {
+            ItemStack item = toItemStack();
+            if (item != null) {
+                itemType = item.getType().name();
+            }
+        }
+        return itemType != null ? itemType : "UNKNOWN";
     }
 
     public boolean isEmpty() {

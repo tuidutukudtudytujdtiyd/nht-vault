@@ -1,40 +1,42 @@
 package com.playervaultplus.vault;
 
 import com.playervaultplus.PlayerVaultPlus;
-import com.playervaultplus.data.VaultDataManager;
+import com.playervaultplus.database.DatabaseManager;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Manages all player vaults with caching
+ * Manages all player vaults with caching and database persistence
  * Ensures only one vault instance per player
  */
 public class VaultManager {
 
     private final PlayerVaultPlus plugin;
     private final Map<UUID, PlayerVault> vaults = new HashMap<>();
-    private final VaultDataManager dataManager;
+    private final DatabaseManager databaseManager;
 
     public VaultManager(PlayerVaultPlus plugin) {
         this.plugin = plugin;
-        this.dataManager = plugin.getDataManager();
+        this.databaseManager = plugin.getDatabaseManager();
     }
 
     /**
      * Get or create a vault for a player
      */
-    public synchronized PlayerVault getOrCreateVault(UUID playerUUID) {
+    public synchronized PlayerVault getOrCreateVault(UUID playerUUID, String playerName) {
         return vaults.computeIfAbsent(playerUUID, uuid -> {
-            // Try to load from disk first
-            PlayerVault vault = dataManager.loadVault(uuid);
-            if (vault == null) {
-                // Create new vault if doesn't exist
-                vault = new PlayerVault(uuid);
-                dataManager.saveVault(vault);
+            try {
+                // Try to load from database
+                PlayerVault vault = databaseManager.loadVault(uuid, playerName);
+                return vault;
+            } catch (SQLException e) {
+                plugin.getLogger().severe("Failed to load vault for " + playerUUID + ": " + e.getMessage());
+                e.printStackTrace();
+                return new PlayerVault(uuid);
             }
-            return vault;
         });
     }
 
@@ -46,35 +48,47 @@ public class VaultManager {
     }
 
     /**
-     * Save vault to disk
+     * Save vault to database
      */
     public void saveVault(UUID playerUUID) {
         PlayerVault vault = vaults.get(playerUUID);
         if (vault != null && vault.isDirty()) {
-            dataManager.saveVault(vault);
-            vault.setClean();
+            try {
+                databaseManager.saveVault(vault);
+                vault.setClean();
+            } catch (SQLException e) {
+                plugin.getLogger().severe("Failed to save vault: " + e.getMessage());
+            }
         }
     }
 
     /**
-     * Unload vault from cache (called when player disconnects)
+     * Unload vault from cache
      */
     public synchronized void unloadVault(UUID playerUUID) {
         PlayerVault vault = vaults.remove(playerUUID);
         if (vault != null && vault.isDirty()) {
-            dataManager.saveVault(vault);
+            try {
+                databaseManager.saveVault(vault);
+            } catch (SQLException e) {
+                plugin.getLogger().severe("Failed to save vault on unload: " + e.getMessage());
+            }
         }
     }
 
     /**
-     * Save all dirty vaults to disk
+     * Save all dirty vaults to database
      */
     public synchronized void saveAllDirtyVaults() {
         vaults.values().stream()
             .filter(PlayerVault::isDirty)
             .forEach(vault -> {
-                dataManager.saveVault(vault);
-                vault.setClean();
+                try {
+                    databaseManager.saveVault(vault);
+                    vault.setClean();
+                } catch (SQLException e) {
+                    plugin.getLogger().severe("Failed to save vault: " + e.getMessage());
+                }
             });
     }
 
